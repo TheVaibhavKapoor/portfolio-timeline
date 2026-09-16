@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Timeline Engine — Advanced All-in-One Investment Simulator</title>
+  <meta name="description" content="Advanced all-in-one portfolio investment timeline calculator. Model initial lumpsums, recurring SIPs, mid-journey lumpsums, and SWP withdrawals with interactive live-editable graph." />
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/components.css" />
+  <link rel="stylesheet" href="./src/styles/responsive.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo">₹</div>
+        <div class="brand-text">
+          <h1>PORTFOLIO TIMELINE ENGINE</h1>
+          <p>One Portfolio • Dynamic Cash Flows • Interactive Live Timeline</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <!-- Currency Selector -->
+        <div class="btn-group">
+          <button id="currInrBtn" class="btn btn-secondary btn-sm active">₹ INR</button>
+          <button id="currUsdBtn" class="btn btn-secondary btn-sm">$ USD</button>
+        </div>
+
+        <!-- Presets Dropdown -->
+        <select id="presetSelect" class="form-control btn-sm" style="max-width: 220px;">
+          <option value="" disabled selected>⚡ Load Preset Journey...</option>
+        </select>
+
+        <!-- Goal Seeker Button -->
+        <button id="openGoalModalBtn" class="btn btn-secondary btn-sm">
+          🎯 Goal Seeker
+        </button>
+
+        <!-- Reset Button (Clear All & Start from Scratch) -->
+        <button id="resetDefaultsBtn" class="btn btn-outline btn-sm" title="Clear all rules & start from scratch">
+          ↺ Reset
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Portfolio Assumptions Bar (Collapsible Dropdown Section) -->
+    <section class="glass-panel parameters-accordion-panel" id="parametersPanel">
+      <div class="parameters-accordion-header" id="parametersToggleBtn" role="button" tabindex="0" aria-expanded="true" title="Click to collapse/expand parameter section">
+        <div class="parameters-header-left">
+          <span class="parameters-header-icon">⚙️</span>
+          <span class="parameters-header-title">Core Investment Parameters</span>
+          <div class="parameters-summary-chips" id="parametersSummaryChips">
+            <span class="param-chip" id="chipHorizon">10 Yrs (120 Mo)</span>
+            <span class="param-chip" id="chipReturn">12.0% Return</span>
+            <span class="param-chip" id="chipLumpsum">₹10.0 L Seed</span>
+            <span class="param-chip" id="chipSip">₹25.0 K/mo SIP</span>
+            <span class="param-chip" id="chipInflation">6.0% Infl</span>
+          </div>
+        </div>
+        <div class="parameters-header-right">
+          <span class="parameters-toggle-label" id="parametersToggleLabel">Collapse</span>
+          <span class="parameters-chevron-icon">▼</span>
+        </div>
+      </div>
+
+      <div class="parameters-accordion-body" id="parametersBody">
+        <div class="assumptions-grid">
+          <!-- Horizon -->
+          <div class="form-group">
+            <label class="form-label" for="horizonInput">
+              <span>Investment Horizon</span>
+              <span id="horizonLabel" style="color: var(--accent-emerald); font-weight: 600;">120 Months</span>
+            </label>
+            <div class="input-with-addon">
+              <input type="number" id="horizonInput" min="1" value="10" step="1" class="form-control" placeholder="Years" />
+              <span class="input-addon">Years</span>
+            </div>
+          </div>
+
+          <!-- Expected Annual Return -->
+          <div class="form-group">
+            <label class="form-label" for="returnInput">Expected Return (p.a.)</label>
+            <div class="input-with-addon">
+              <input type="number" id="returnInput" value="12.0" step="0.5" min="0" max="40" class="form-control" />
+              <span class="input-addon">%</span>
+            </div>
+          </div>
+
+          <!-- Scenario Quick Selector -->
+          <div class="form-group">
+            <label class="form-label">Scenario Mode</label>
+            <div class="scenario-pill-group">
+              <button class="scenario-pill" data-scenario="conservative" data-rate="8.0">Cons (8%)</button>
+              <button class="scenario-pill active" data-scenario="base" data-rate="12.0">Base (12%)</button>
+              <button class="scenario-pill" data-scenario="optimistic" data-rate="15.0">Opt (15%)</button>
+            </div>
+          </div>
+
+          <!-- Compounding Frequency -->
+          <div class="form-group">
+            <label class="form-label" for="compoundingSelect">Compounding</label>
+            <select id="compoundingSelect" class="form-control">
+              <option value="monthly" selected>Monthly Compounding</option>
+              <option value="annual">Annual Compounding</option>
+            </select>
+          </div>
+
+          <!-- Inflation Adjustment -->
+          <div class="form-group">
+            <label class="form-label" for="inflationInput">
+              <span>Inflation (p.a.)</span>
+              <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.7rem; text-transform:none; cursor:pointer;">
+                <input type="checkbox" id="realCorpusToggle" /> Adjust Real
+              </label>
+            </label>
+            <div class="input-with-addon">
+              <input type="number" id="inflationInput" value="6.0" step="0.5" min="0" max="25" class="form-control" />
+              <span class="input-addon">%</span>
+            </div>
+          </div>
+
+          <!-- Initial Seed Capital -->
+          <div class="form-group">
+            <label class="form-label" for="initialInvestmentInput">Initial Seed Lumpsum</label>
+            <div class="input-with-addon">
+              <input type="number" id="initialInvestmentInput" value="1000000" step="50000" min="0" class="form-control" />
+              <span class="input-addon curr-symbol">₹</span>
+            </div>
+          </div>
+
+          <!-- Monthly Core SIP -->
+          <div class="form-group">
+            <label class="form-label" for="topSipInput">
+              <span>Monthly Core SIP</span>
+              <span id="topSipFormatted" style="color: var(--accent-emerald); font-weight: 600;">₹25,000/mo</span>
+            </label>
+            <div class="input-with-addon">
+              <input type="number" id="topSipInput" value="25000" step="1000" min="0" class="form-control" />
+              <span class="input-addon curr-symbol">₹/mo</span>
+            </div>
+          </div>
+
+          <!-- Annual SIP Top-Up (Step-Up) -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+              <label class="form-label" style="margin-bottom: 0;">
+                <span>Annual SIP Top-Up</span>
+              </label>
+              <div class="segmented-picker" style="padding: 2px; gap: 2px;">
+                <button type="button" class="segmented-option active" id="sipTopUpTypePercentBtn" style="padding: 2px 7px; font-size: 0.72rem; border-radius: 4px;">% Rate</button>
+                <button type="button" class="segmented-option" id="sipTopUpTypeAbsoluteBtn" style="padding: 2px 7px; font-size: 0.72rem; border-radius: 4px;">Fixed <span class="curr-symbol">₹</span></button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <!-- Start From Year -->
+              <div style="flex: 1;" title="Year in which the annual top-up starts">
+                <div class="input-with-addon">
+                  <span class="input-addon" style="padding: 0 6px; font-size: 0.74rem; color: var(--text-muted);">From Y</span>
+                  <input type="number" id="topSipStepUpStartYear" value="2" min="1" max="50" step="1" class="form-control" style="padding-left: 4px; padding-right: 4px; text-align: center;" />
+                </div>
+              </div>
+              <!-- Top-Up Value -->
+              <div style="flex: 1.45;">
+                <div class="input-with-addon">
+                  <input type="number" id="topSipStepUpInput" value="0" step="1" min="0" class="form-control" placeholder="0" />
+                  <span class="input-addon" id="topSipStepUpAddon">% / yr</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Depletion Alert Banner (Hidden by default) -->
+    <div id="depletionAlert" class="depletion-alert" style="display: none;">
+      <div class="depletion-alert-text">
+        <span style="font-size: 1.3rem;">⚠️</span>
+        <div>
+          <strong>Corpus Depletion Warning:</strong>
+          <span id="depletionAlertMsg">The portfolio is projected to be fully depleted by Month X. Withdrawals exceed growth and balance.</span>
+        </div>
+      </div>
+      <button id="fixDepletionBtn" class="btn btn-secondary btn-sm" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
+        Adjust Cash Flows
+      </button>
+    </div>
+
+    <!-- Key Outcome Metric Cards -->
+    <section class="metrics-grid">
+      <!-- Final Corpus -->
+      <div class="metric-card accent-emerald">
+        <div class="metric-header">
+          <span class="metric-title">Final Corpus</span>
+          <span class="metric-icon">💰</span>
+        </div>
+        <div class="metric-value" id="metricFinalCorpus">₹0</div>
+        <div class="metric-subtext">
+          <span class="badge badge-emerald" id="metricGrowthMultiple">3.2x Multiple</span>
+          <span id="metricRealCorpusNote">Nominal Value</span>
+        </div>
+      </div>
+
+      <!-- Total Invested -->
+      <div class="metric-card accent-indigo">
+        <div class="metric-header">
+          <span class="metric-title">Total Invested</span>
+          <span class="metric-icon">📥</span>
+        </div>
+        <div class="metric-value" id="metricTotalInvested">₹0</div>
+        <div class="metric-subtext">
+          <span id="metricInvestedBreakdown">Initial + SIP + Additions</span>
+        </div>
+      </div>
+
+      <!-- Wealth Created -->
+      <div class="metric-card accent-amber">
+        <div class="metric-header">
+          <span class="metric-title">Wealth Created (Profit)</span>
+          <span class="metric-icon">✨</span>
+        </div>
+        <div class="metric-value" id="metricWealthCreated">₹0</div>
+        <div class="metric-subtext">
+          <span class="badge badge-amber" id="metricProfitPercent">+0%</span>
+          <span>Returns earned</span>
+        </div>
+      </div>
+
+      <!-- Total Withdrawn (SWP) -->
+      <div class="metric-card accent-rose">
+        <div class="metric-header">
+          <span class="metric-title">Total Withdrawn (SWP)</span>
+          <span class="metric-icon">📤</span>
+        </div>
+        <div class="metric-value" id="metricTotalWithdrawn">₹0</div>
+        <div class="metric-subtext">
+          <span id="metricWithdrawalCount">0 Active SWP months</span>
+        </div>
+      </div>
+
+      <!-- Realized XIRR / CAGR -->
+      <div class="metric-card accent-purple">
+        <div class="metric-header">
+          <span class="metric-title">Portfolio XIRR</span>
+          <span class="metric-icon">📈</span>
+        </div>
+        <div class="metric-value" id="metricXirr">0.0%</div>
+        <div class="metric-subtext">
+          <span>Exact cash-flow annualized rate</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hero Interactive Return Graph -->
+    <section class="glass-panel chart-section">
+      <div class="chart-header">
+        <div class="chart-title-area">
+          <h2>Interactive Portfolio Growth Curve</h2>
+          <span class="badge badge-emerald" id="chartHorizonBadge">10 Years</span>
+        </div>
+        <div class="chart-controls">
+          <!-- View Toggle: Annual vs Monthly -->
+          <div class="chart-view-toggle">
+            <button id="viewAnnualBtn" class="chart-view-btn active">Annual View</button>
+            <button id="viewMonthlyBtn" class="chart-view-btn">Monthly View</button>
+          </div>
+
+          <!-- Scenario Comparison Toggle -->
+          <button id="toggleCompareScenariosBtn" class="btn btn-secondary btn-sm">
+            📊 Compare Scenarios
+          </button>
+
+          <!-- Target Goal Toggle -->
+          <button id="toggleGoalMarkerBtn" class="btn btn-secondary btn-sm">
+            🎯 Target Marker
+          </button>
+
+          <!-- Zoom Controls with Popover -->
+          <div class="zoom-control-container" style="position: relative; display: flex; gap: 4px;">
+            <button id="openZoomRangeBtn" class="btn btn-secondary btn-sm" title="Zoom into a specific year range">
+              🔍 Zoom Section
+            </button>
+            <button id="resetZoomBtn" class="btn btn-outline btn-sm" style="display: none;" title="Reset back to full timeline">
+              ↺ Reset Zoom
+            </button>
+
+            <!-- Zoom Range Popover Modal -->
+            <div id="zoomRangePopover" class="zoom-range-popover" style="display: none;">
+              <div class="zoom-popover-header">
+                <h4>Zoom Into Timeline Section</h4>
+                <button id="closeZoomPopoverBtn" class="icon-btn" style="font-size: 1rem;">✕</button>
+              </div>
+              <div class="zoom-popover-body">
+                <div class="form-group">
+                  <label class="form-label">Select Year Range</label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div>
+                      <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">From Year</span>
+                      <select id="zoomFromSelect" class="form-control btn-sm">
+                        <!-- Populated dynamically -->
+                      </select>
+                    </div>
+                    <div>
+                      <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">To Year</span>
+                      <select id="zoomToSelect" class="form-control btn-sm">
+                        <!-- Populated dynamically -->
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quick Section Presets -->
+                <div class="zoom-quick-presets">
+                  <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;">Quick Section Jump:</span>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="zoom-preset-pill" data-range="first5">Y1–Y5</button>
+                    <button type="button" class="zoom-preset-pill" data-range="first10">Y1–Y10</button>
+                    <button type="button" class="zoom-preset-pill" data-range="swpPhase">SWP Phase</button>
+                    <button type="button" class="zoom-preset-pill" data-range="last5">Last 5 Yrs</button>
+                  </div>
+                </div>
+              </div>
+              <div class="zoom-popover-footer">
+                <button type="button" id="resetZoomInnerBtn" class="btn btn-secondary btn-sm">Reset Full</button>
+                <button type="button" id="applyZoomRangeBtn" class="btn btn-primary btn-sm">Apply Zoom</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Series Visibility Toggles (Tick and Untick Curves) -->
+      <div class="chart-series-bar">
+        <span class="series-bar-title">Curves Display:</span>
+        <div class="series-checkbox-group">
+          <label class="series-pill-label series-portfolio" title="Toggle Portfolio Value curve">
+            <input type="checkbox" id="toggleSeriesPortfolio" checked />
+            <span class="series-checkbox-box"></span>
+            <span class="series-color-dot dot-emerald"></span>
+            <span class="series-text">Portfolio Value</span>
+          </label>
+
+          <label class="series-pill-label series-invested" title="Toggle Invested Capital curve">
+            <input type="checkbox" id="toggleSeriesInvested" checked />
+            <span class="series-checkbox-box"></span>
+            <span class="series-color-dot dot-indigo"></span>
+            <span class="series-text">Invested Capital</span>
+          </label>
+
+          <label class="series-pill-label series-returns" title="Toggle Estimated Returns curve">
+            <input type="checkbox" id="toggleSeriesReturns" checked />
+            <span class="series-checkbox-box"></span>
+            <span class="series-color-dot dot-amber"></span>
+            <span class="series-text">Estimated Returns</span>
+          </label>
+
+          <label class="series-pill-label series-real" title="Toggle Inflation-Adjusted (Real) curve">
+            <input type="checkbox" id="toggleSeriesReal" />
+            <span class="series-checkbox-box"></span>
+            <span class="series-color-dot dot-cyan"></span>
+            <span class="series-text">Inflation-Adjusted (Real)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Canvas -->
+      <div class="chart-canvas-container">
+        <canvas id="portfolioChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Interactive Visual Timeline -->
+    <section class="glass-panel timeline-section">
+      <div class="timeline-header-row">
+        <div>
+          <h3 style="font-size: 1.05rem; font-weight: 700;">Portfolio Journey Timeline</h3>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Visual milestones of your SIPs, Lumpsums, and SWPs across years</p>
+        </div>
+        <button id="openAddEventModalBtn" class="btn btn-primary btn-sm">
+          + Add Investment Event
+        </button>
+      </div>
+
+      <!-- Timeline Rail -->
+      <div id="timelineContainer"></div>
+    </section>
+
+    <!-- Cash Flow Management & Ledger Breakdown -->
+    <div class="management-grid">
+      <!-- Active Events List -->
+      <section class="glass-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div>
+            <h3 style="font-size: 1rem; font-weight: 700;">Active Cash-Flow Rules & Events</h3>
+            <p style="font-size: 0.76rem; color: var(--text-muted);">SIP rules, one-off Lumpsums, and SWP withdrawals</p>
+          </div>
+          <button id="openAddEventBtn2" class="btn btn-secondary btn-sm">+ Add</button>
+        </div>
+
+        <div id="eventsListContainer" class="events-list-container">
+          <!-- Populated by main.js -->
+        </div>
+      </section>
+
+      <!-- Ledger Breakdown Table -->
+      <section class="glass-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <h3 style="font-size: 1rem; font-weight: 700;">Portfolio Ledger</h3>
+            <p style="font-size: 0.76rem; color: var(--text-muted);">Detailed period-by-period financial audit</p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <select id="ledgerGranularitySelect" class="form-control btn-sm">
+              <option value="annual" selected>Annual Breakdown</option>
+              <option value="monthly">Monthly Breakdown</option>
+            </select>
+            <button id="exportCsvBtn" class="btn btn-outline btn-sm">
+              ⬇ Export CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+          <table class="data-table" id="ledgerTable">
+            <thead>
+              <tr id="ledgerHeaderRow">
+                <th>Period</th>
+                <th>Opening</th>
+                <th>Invested</th>
+                <th>Returns</th>
+                <th>SWP</th>
+                <th>Closing</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerTableBody">
+              <!-- Populated by main.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Slide-Over Period Quick Editor Drawer (Signature UX) -->
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="drawerPanel" class="drawer-panel">
+    <div class="drawer-header">
+      <div>
+        <h3 id="drawerTitle" style="font-size: 1.15rem; font-weight: 800;">YEAR 4 OVERVIEW</h3>
+        <p id="drawerSubtitle" style="font-size: 0.78rem; color: var(--text-muted);">Inspect and edit cash flows for this period</p>
+      </div>
+      <button id="closeDrawerBtn" class="icon-btn" style="font-size: 1.2rem;">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Period Balance Summary -->
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.8rem;">
+          <span style="color: var(--text-muted);">Opening Corpus:</span>
+          <span id="drawerOpeningCorpus" style="font-family: var(--font-mono); font-weight: 700;">₹0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.8rem;">
+          <span style="color: var(--text-muted);">Closing Corpus:</span>
+          <span id="drawerClosingCorpus" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-emerald);">₹0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+          <span style="color: var(--text-muted);">Net Growth / Returns:</span>
+          <span id="drawerGrowthPercent" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-amber);">+0%</span>
+        </div>
+      </div>
+
+      <!-- In-drawer Edit Controls -->
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary);">
+          Modify Period Cash Flows
+        </h4>
+
+        <!-- Change Monthly SIP starting this Year -->
+        <div class="form-group">
+          <label class="form-label" for="drawerSipInput">
+            <span>Monthly SIP In This Period</span>
+            <span id="drawerSipHint" style="color: var(--accent-emerald);">Active SIP</span>
+          </label>
+          <div class="input-with-addon">
+            <input type="number" id="drawerSipInput" value="0" step="1000" min="0" class="form-control" />
+            <span class="input-addon">₹/mo</span>
+          </div>
+        </div>
+
+        <!-- Add or Change Lumpsum for this Year -->
+        <div class="form-group">
+          <label class="form-label" for="drawerLumpsumInput">
+            <span>Inject Lumpsum In This Period</span>
+            <span id="drawerLumpsumMonthLabel" style="color: var(--accent-cyan);">Month 36</span>
+          </label>
+          <div class="input-with-addon">
+            <input type="number" id="drawerLumpsumInput" value="0" step="25000" min="0" class="form-control" />
+            <span class="input-addon">₹</span>
+          </div>
+        </div>
+
+        <!-- Add or Change SWP for this Year -->
+        <div class="form-group">
+          <label class="form-label" for="drawerSwpInput">Monthly Withdrawal (SWP)</label>
+          <div class="input-with-addon">
+            <input type="number" id="drawerSwpInput" value="0" step="5000" min="0" class="form-control" />
+            <span class="input-addon">₹/mo</span>
+          </div>
+        </div>
+
+        <!-- Period Expected Return Override -->
+        <div class="form-group">
+          <label class="form-label" for="drawerReturnOverrideInput">
+            <span>Annual Return Rate For This Year</span>
+            <span style="font-size: 0.7rem; color: var(--text-muted);">(Overrides default)</span>
+          </label>
+          <div class="input-with-addon">
+            <input type="number" id="drawerReturnOverrideInput" value="12.0" step="0.5" min="0" max="50" class="form-control" />
+            <span class="input-addon">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <button id="cancelDrawerBtn" class="btn btn-secondary">Cancel</button>
+      <button id="applyDrawerBtn" class="btn btn-primary">Apply & Recalculate</button>
+    </div>
+  </aside>
+
+  <!-- Add / Edit Investment Event Modal -->
+  <div id="eventModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalTitle" style="font-size: 1.1rem; font-weight: 700;">Add Investment Event</h3>
+        <button id="closeModalBtn" class="icon-btn">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Event Type Segmented Control -->
+        <div class="form-group">
+          <label class="form-label">Event Type</label>
+          <div class="segmented-picker">
+            <button type="button" class="segmented-option active" data-type="lumpsum">
+              <span>🔵</span> Lumpsum
+            </button>
+            <button type="button" class="segmented-option" data-type="sip">
+              <span>🟢</span> SIP
+            </button>
+            <button type="button" class="segmented-option" data-type="swp">
+              <span>🟠</span> SWP
+            </button>
+          </div>
+        </div>
+
+        <!-- Label / Name -->
+        <div class="form-group">
+          <label class="form-label" for="modalEventName">Event Label</label>
+          <input type="text" id="modalEventName" placeholder="e.g. Annual Bonus, Property Liquidation" class="form-control" />
+        </div>
+
+        <!-- Amount -->
+        <div class="form-group">
+          <label class="form-label" for="modalEventAmount" id="modalAmountLabel">Amount</label>
+          <div class="input-with-addon">
+            <input type="number" id="modalEventAmount" value="200000" step="10000" min="1000" class="form-control" />
+            <span class="input-addon" id="modalAmountAddon">₹</span>
+          </div>
+        </div>
+
+        <!-- Lumpsum Specific: Month Selection -->
+        <div id="modalLumpsumFields" class="form-group">
+          <label class="form-label" for="modalLumpsumMonth">
+            <span>When? (Month in Timeline)</span>
+            <span id="modalLumpsumMonthHint" style="color: var(--accent-cyan);">Month 12 (Year 1)</span>
+          </label>
+          <input type="number" id="modalLumpsumMonth" value="12" min="1" max="360" class="form-control" />
+        </div>
+
+        <!-- SIP Specific: Start, End, Step-Up -->
+        <div id="modalSipFields" style="display: none; flex-direction: column; gap: 1rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label" for="modalSipStart">Start Month</label>
+              <input type="number" id="modalSipStart" value="1" min="1" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="modalSipEnd">End Month</label>
+              <input type="number" id="modalSipEnd" value="120" min="1" class="form-control" />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label" for="modalSipStepUpType">Top-Up Type</label>
+              <select id="modalSipStepUpType" class="form-control">
+                <option value="percent" selected>% Percentage</option>
+                <option value="absolute">Fixed Amount (₹)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="modalSipStepUpStartYear">Start From Year</label>
+              <div class="input-with-addon">
+                <span class="input-addon">Year</span>
+                <input type="number" id="modalSipStepUpStartYear" value="2" min="1" max="50" step="1" class="form-control" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="modalSipStepUp" id="modalSipStepUpLabel">Annual Top-Up (% per year)</label>
+            <div class="input-with-addon">
+              <input type="number" id="modalSipStepUp" value="0" min="0" step="1" class="form-control" />
+              <span class="input-addon" id="modalSipStepUpAddon">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SWP Specific: Start, Duration, Inflation Step-Up -->
+        <div id="modalSwpFields" style="display: none; flex-direction: column; gap: 1rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label" for="modalSwpStart">Start Month</label>
+              <input type="number" id="modalSwpStart" value="61" min="1" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="modalSwpDuration">Duration (Months)</label>
+              <input type="number" id="modalSwpDuration" value="60" min="-1" placeholder="-1 for indefinite" class="form-control" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="modalSwpStepUp">Annual Withdrawal Escalation (% p.a.)</label>
+            <div class="input-with-addon">
+              <input type="number" id="modalSwpStepUp" value="5" min="0" max="30" step="1" class="form-control" />
+              <span class="input-addon">%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="cancelModalBtn" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="saveEventModalBtn" class="btn btn-primary">Save to Timeline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goal Seeker Modal -->
+  <div id="goalModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; font-weight: 700;">🎯 Goal Seeker Calculator</h3>
+        <button id="closeGoalModalBtn" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.82rem; color: var(--text-muted);">
+          Define your target wealth goal. The engine solves the exact required monthly SIP taking into account your initial capital, mid-term lumpsums, and expected returns.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="goalTargetAmountInput">Target Corpus Goal</label>
+          <div class="input-with-addon">
+            <input type="number" id="goalTargetAmountInput" value="10000000" step="500000" min="100000" class="form-control" />
+            <span class="input-addon">₹</span>
+          </div>
+          <span id="goalTargetFormatted" style="font-size: 0.78rem; color: var(--accent-emerald); font-weight: 600;">₹1.00 Cr</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="goalTargetYearsInput">Within Horizon (Years)</label>
+          <input type="number" id="goalTargetYearsInput" value="10" min="1" max="35" class="form-control" />
+        </div>
+
+        <!-- Result Card -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 1.25rem; text-align: center;">
+          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #6ee7b7; margin-bottom: 0.4rem;">
+            Calculated Required Monthly SIP
+          </div>
+          <div id="goalSolvedSipAmount" style="font-size: 2rem; font-weight: 800; color: #34d399; font-family: var(--font-mono);">
+            ₹43,500
+          </div>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+            Assumes your current return assumption and discrete lumpsums.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="cancelGoalModalBtn" class="btn btn-secondary">Close</button>
+        <button type="button" id="applyGoalSipBtn" class="btn btn-primary">Apply SIP To Timeline</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
