@@ -5,10 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portfolio Timeline Engine — Advanced All-in-One Investment Simulator</title>
   <meta name="description" content="Advanced all-in-one portfolio investment timeline calculator. Model initial lumpsums, recurring SIPs, mid-journey lumpsums, and SWP withdrawals with interactive live-editable graph." />
-  <script type="module" crossorigin src="./assets/index-BePdzkEr.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DzFPRHbG.css">
+  <script type="module" crossorigin src="./assets/index-CE9eDi_j.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CwaOcYVe.css">
 </head>
 <body>
+  <!-- Kotak Scrollytelling Map Experience -->
+  <section id="scrollyTrack">
+    <div id="scrollyViewport">
+      <div id="scrollyCanvasWrapper">
+        <canvas id="scrollyCanvas"></canvas>
+      </div>
+
+      <!-- HUD Overlay -->
+      <div class="scrolly-hud-overlay">
+        <!-- Top Bar -->
+        <div class="scrolly-top-bar">
+          <div class="scrolly-badge">
+            <span class="scrolly-pulse-dot"></span>
+            <span>Kotak Enterprise • Regional Intelligence</span>
+          </div>
+
+          <button id="scrollySkipBtn" class="scrolly-skip-btn" title="Jump straight to SIP Dashboard">
+            <span>Skip to SIP Planner</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Bottom Scroll Prompt -->
+        <div id="scrollyBottomPrompt" class="scrolly-bottom-prompt" title="Scroll down to explore map and launch dashboard">
+          <div class="scroll-indicator-mouse">
+            <div class="scroll-indicator-wheel"></div>
+          </div>
+          <span class="scrolly-prompt-text">Scroll to Explore & Launch</span>
+        </div>
+
+        <!-- Progress HUD -->
+        <div class="scrolly-progress-hud">
+          <span>MAP ZOOM & DEPLOY</span>
+          <div class="scrolly-progress-bar-wrap">
+            <div id="scrollyProgressFill" class="scrolly-progress-bar-fill"></div>
+          </div>
+          <span id="scrollyProgressText">0%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="app-container">
     <!-- Header -->
     <header class="app-header">
@@ -20,6 +64,11 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- Intro Replay Button -->
+        <button id="replayIntroBtn" class="btn-replay-intro" title="Replay Kotak Map Zoom Intro">
+          <span>⏮ Map Intro</span>
+        </button>
+
         <!-- Currency Selector -->
         <div class="btn-group">
           <button id="currInrBtn" class="btn btn-secondary btn-sm active">₹ INR</button>
