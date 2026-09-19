@@ -2,6 +2,7 @@ import { simulatePortfolio, solveRequiredSIP } from './engine.js';
 import { PortfolioChart } from './chart.js';
 import { PortfolioTimeline } from './timeline.js';
 import { PRESETS } from './presets.js';
+import { initScrollytelling } from './scrollytelling.js';
 import {
   formatCompactCurrency,
   formatFullCurrency,
@@ -169,6 +170,8 @@ let chartInstance = null;
 let timelineInstance = null;
 
 function init() {
+  initScrollytelling();
+
   chartInstance = new PortfolioChart(elements.chartCanvas, {
     onSelectPeriod: (periodInfo) => {
       openPeriodDrawer(periodInfo);
